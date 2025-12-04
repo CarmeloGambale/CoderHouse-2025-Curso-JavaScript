@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Gamer - Mi GamePass Casero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-icon">🎮</span>
+                Biblioteca Gamer
+            </h1>
+            <p class="tagline">El GamePass de los pibes 🕹️</p>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <nav class="nav-panel">
+            <button class="nav-btn active" data-section="catalogo">
+                <span class="nav-icon">📚</span>
+                Catálogo
+            </button>
+            <button class="nav-btn" data-section="registrar">
+                <span class="nav-icon">👤</span>
+                Anotarse
+            </button>
+            <button class="nav-btn" data-section="reservar">
+                <span class="nav-icon">🎯</span>
+                Pedir Prestado
+            </button>
+            <button class="nav-btn" data-section="multas">
+                <span class="nav-icon">💰</span>
+                Multas
+            </button>
+            <button class="nav-btn" data-section="admin">
+                <span class="nav-icon">⚙️</span>
+                Admin
+            </button>
+        </nav>
+
+        <div class="content-area">
+            
+            <section id="catalogo" class="section active">
+                <div class="section-header">
+                    <h2 class="section-title">Catálogo de Juegos</h2>
+                    <p class="section-subtitle">Mirá todos los juegos que tenemos para prestar entre amigos</p>
+                </div>
+                
+                <div class="filtros-container">
+                    <div class="filtro-grupo">
+                        <label for="filtro-genero">Filtrar por género:</label>
+                        <select id="filtro-genero" class="input-select">
+                            <option value="">Todos los géneros</option>
+                            <option value="Shooter">Shooter</option>
+                            <option value="Aventura">Aventura</option>
+                            <option value="Acción">Acción</option>
+                            <option value="Futbol">Fútbol</option>
+                            <option value="RPG">RPG</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label for="filtro-disponible">¿Está libre?</label>
+                        <select id="filtro-disponible" class="input-select">
+                            <option value="">Todos</option>
+                            <option value="true">Solo los libres</option>
+                            <option value="false">Solo los prestados</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label for="buscar-juego">Buscar por nombre: </label>
+                        <input type="text" id="buscar-juego" class="input-text" placeholder="Escribí el nombre...">
+                    </div>
+                </div>
+
+                <div id="juegos-grid" class="juegos-grid"></div>
+            </section>
+
+            <section id="registrar" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Anotate para jugar</h2>
+                    <p class="section-subtitle">Sumáte a la banda gamer para poder llevarte juegos prestados</p>
+                </div>
+
+                <form id="form-registro" class="form-container">
+                    <div class="form-group">
+                        <label for="reg-nombre">Nombre *</label>
+                        <input type="text" id="reg-nombre" class="input-text" placeholder="Tu nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-apellido">Apellido *</label>
+                        <input type="text" id="reg-apellido" class="input-text" placeholder="Tu apellido" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-correo">Mail *</label>
+                        <input type="email" id="reg-correo" class="input-text" placeholder="tunombre@mail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-usuario">Tu gamertag (opcional)</label>
+                        <input type="text" id="reg-usuario" class="input-text" placeholder="Ej: ElPibeDeLosJuegos">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">✅</span>
+                        Anotarme
+                    </button>
+                </form>
+
+                <div id="registro-feedback" class="feedback-message"></div>
+
+                <div class="jugadores-section">
+                    <h3 class="subsection-title">La Banda Gamer</h3>
+                    <div id="jugadores-lista" class="jugadores-lista"></div>
+                </div>
+            </section>
+
+            <section id="reservar" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Pedir un Juego Prestado</h2>
+                    <p class="section-subtitle">Elegí qué te querés llevar y por cuántos días</p>
+                </div>
+
+                <form id="form-reserva" class="form-container">
+                    <div class="form-group">
+                        <label for="reserva-jugador">¿Quién sos? *</label>
+                        <select id="reserva-jugador" class="input-select" required>
+                            <option value="">-- Elegí tu nombre --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reserva-juego">¿Qué querés llevarte? *</label>
+                        <select id="reserva-juego" class="input-select" required>
+                            <option value="">-- Elegí un juego libre --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reserva-dias">¿Por cuántos días? (de 3 a 14) *</label>
+                        <input type="number" id="reserva-dias" class="input-text" min="3" max="14" value="7" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-icon">🎯</span>
+                        ¡Me lo llevo!
+                    </button>
+                </form>
+
+                <div id="reserva-feedback" class="feedback-message"></div>
+
+                <div class="reservas-section">
+                    <h3 class="subsection-title">Juegos que están afuera</h3>
+                    <div id="reservas-lista" class="reservas-lista"></div>
+                </div>
+            </section>
+
+            <section id="multas" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Calculadora de Multas</h2>
+                    <p class="section-subtitle">Fijáte cuánto tenés que pagar si te atrasaste</p>
+                </div>
+
+                <div class="calculadora-container">
+                    <div class="info-box">
+                        <span class="info-icon">ℹ️</span>
+                        <p>Si te pasaste de la fecha, son <strong>$250 por día</strong> de atraso. ¡No te cuelgues!</p>
+                    </div>
+
+                    <form id="form-multa" class="form-container">
+                        <div class="form-group">
+                            <label for="multa-dias">¿Cuántos días te atrasaste?</label>
+                            <input type="number" id="multa-dias" class="input-text" min="0" value="0" placeholder="Ponéle un número">
+                        </div>
+                        <button type="submit" class="btn btn-secondary">
+                            <span class="btn-icon">🧮</span>
+                            Calcular
+                        </button>
+                    </form>
+
+                    <div id="multa-resultado" class="resultado-multa">
+                        <div class="resultado-label">Te sale:</div>
+                        <div class="resultado-valor">$0</div>
+                    </div>
+                </div>
+
+                <div class="historial-section">
+                    <h3 class="subsection-title">Últimos cálculos</h3>
+                    <div id="historial-multas" class="historial-lista"></div>
+                    <button id="limpiar-historial" class="btn btn-small btn-danger">
+                        <span class="btn-icon">🗑️</span>
+                        Borrar historial
+                    </button>
+                </div>
+            </section>
+
+            <section id="admin" class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Panel de Admin</h2>
+                    <p class="section-subtitle">Acá podés agregar juegos y manejar los datos</p>
+                </div>
+
+                <div class="admin-panel">
+                    <h3 class="subsection-title">Agregar un Juego Nuevo</h3>
+                    <form id="form-agregar-juego" class="form-container">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nuevo-titulo">Nombre del juego *</label>
+                                <input type="text" id="nuevo-titulo" class="input-text" placeholder="Ej: Minecraft" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nuevo-desarrollador">¿Quién lo hizo? *</label>
+                                <input type="text" id="nuevo-desarrollador" class="input-text" placeholder="Ej: Mojang" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nuevo-genero">Género *</label>
+                                <select id="nuevo-genero" class="input-select" required>
+                                    <option value="">Elegí uno</option>
+                                    <option value="Shooter">Shooter</option>
+                                    <option value="Aventura">Aventura</option>
+                                    <option value="Acción">Acción</option>
+                                    <option value="Futbol">Fútbol</option>
+                                    <option value="RPG">RPG</option>
+                                    <option value="Estrategia">Estrategia</option>
+                                    <option value="Carreras">Carreras</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="nuevo-imagen">Link de imagen (opcional)</label>
+                                <input type="url" id="nuevo-imagen" class="input-text" placeholder="https://...">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-icon">➕</span>
+                            Agregar Juego
+                        </button>
+                    </form>
+                    <div id="admin-feedback" class="feedback-message"></div>
+                </div>
+
+                <div class="admin-panel">
+                    <h3 class="subsection-title">Opciones</h3>
+                    <div class="admin-actions">
+                        <button id="btn-reset-juegos" class="btn btn-secondary">
+                            <span class="btn-icon">🔄</span>
+                            Volver a los juegos de antes
+                        </button>
+                        <button id="btn-limpiar-reservas" class="btn btn-warning">
+                            <span class="btn-icon">📋</span>
+                            Cancelar todos los préstamos
+                        </button>
+                        <button id="btn-limpiar-todo" class="btn btn-danger">
+                            <span class="btn-icon">⚠️</span>
+                            Borrar TODO (cuidado eh)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-panel">
+                    <h3 class="subsection-title">¿Cómo viene la cosa?</h3>
+                    <div id="estadisticas" class="stats-grid"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>Hecho por <strong>Carmelo Gambale</strong> | CoderHouse 2025 - JavaScript</p>
+        <p class="footer-small">Entregable 2 - Simulador con DOM, Eventos y localStorage</p>
+    </footer>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
