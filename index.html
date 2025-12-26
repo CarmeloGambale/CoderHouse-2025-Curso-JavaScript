@@ -7,45 +7,81 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <h1 class="logo">
-                <span class="logo-icon">🎮</span>
-                Biblioteca Gamer
-            </h1>
-            <p class="tagline">El GamePass de los pibes 🕹️</p>
-        </div>
-    </header>
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <main class="main-container">
-        <nav class="nav-panel">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-icon">🎮</span>
+                <div class="sidebar-logo-text">
+                    <span class="sidebar-title">Biblioteca</span>
+                    <span class="sidebar-subtitle">Gamer</span>
+                </div>
+            </div>
+            <button class="sidebar-close" id="sidebar-close" aria-label="Cerrar menú">
+                ✕
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Menú Principal</div>
             <button class="nav-btn active" data-section="catalogo">
                 <span class="nav-icon">📚</span>
-                Catálogo
+                <span class="nav-text">Catálogo</span>
             </button>
             <button class="nav-btn" data-section="registrar">
                 <span class="nav-icon">👤</span>
-                Anotarse
+                <span class="nav-text">Anotarse</span>
             </button>
             <button class="nav-btn" data-section="reservar">
                 <span class="nav-icon">🎯</span>
-                Pedir Prestado
+                <span class="nav-text">Pedir Prestado</span>
             </button>
             <button class="nav-btn" data-section="multas">
                 <span class="nav-icon">💰</span>
-                Multas
+                <span class="nav-text">Multas</span>
             </button>
+            
+            <div class="nav-section-label">Configuración</div>
             <button class="nav-btn" data-section="admin">
                 <span class="nav-icon">⚙️</span>
-                Admin
+                <span class="nav-text">Admin</span>
             </button>
         </nav>
 
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <span class="user-avatar">🕹️</span>
+                <span class="user-label">El GamePass de los pibes</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Header móvil -->
+    <header class="mobile-header">
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Abrir menú">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        <h1 class="mobile-logo">
+            <span class="logo-icon">🎮</span>
+            Biblioteca Gamer
+        </h1>
+    </header>
+
+    <main class="main-container">
+
         <div class="content-area">
             
+            <!-- SECCIÓN CATÁLOGO -->
             <section id="catalogo" class="section active">
                 <div class="section-header">
                     <h2 class="section-title">Catálogo de Juegos</h2>
@@ -62,6 +98,7 @@
                             <option value="Acción">Acción</option>
                             <option value="Futbol">Fútbol</option>
                             <option value="RPG">RPG</option>
+                            <option value="MOBA">MOBA</option>
                         </select>
                     </div>
                     <div class="filtro-grupo">
@@ -73,7 +110,7 @@
                         </select>
                     </div>
                     <div class="filtro-grupo">
-                        <label for="buscar-juego">Buscar por nombre: </label>
+                        <label for="buscar-juego">Buscar por nombre:</label>
                         <input type="text" id="buscar-juego" class="input-text" placeholder="Escribí el nombre...">
                     </div>
                 </div>
@@ -81,10 +118,11 @@
                 <div id="juegos-grid" class="juegos-grid"></div>
             </section>
 
+            <!-- SECCIÓN REGISTRAR JUGADOR -->
             <section id="registrar" class="section">
                 <div class="section-header">
                     <h2 class="section-title">Anotate para jugar</h2>
-                    <p class="section-subtitle">Sumáte a la banda gamer para poder llevarte juegos prestados</p>
+                    <p class="section-subtitle">Sumate a la banda gamer para poder llevarte juegos prestados</p>
                 </div>
 
                 <form id="form-registro" class="form-container">
@@ -118,6 +156,7 @@
                 </div>
             </section>
 
+            <!-- SECCIÓN RESERVAR JUEGO -->
             <section id="reservar" class="section">
                 <div class="section-header">
                     <h2 class="section-title">Pedir un Juego Prestado</h2>
@@ -155,10 +194,11 @@
                 </div>
             </section>
 
+            <!-- SECCIÓN MULTAS -->
             <section id="multas" class="section">
                 <div class="section-header">
                     <h2 class="section-title">Calculadora de Multas</h2>
-                    <p class="section-subtitle">Fijáte cuánto tenés que pagar si te atrasaste</p>
+                    <p class="section-subtitle">Fijate cuánto tenés que pagar si te atrasaste</p>
                 </div>
 
                 <div class="calculadora-container">
@@ -170,7 +210,7 @@
                     <form id="form-multa" class="form-container">
                         <div class="form-group">
                             <label for="multa-dias">¿Cuántos días te atrasaste?</label>
-                            <input type="number" id="multa-dias" class="input-text" min="0" value="0" placeholder="Ponéle un número">
+                            <input type="number" id="multa-dias" class="input-text" min="0" value="0" placeholder="Ponele un número">
                         </div>
                         <button type="submit" class="btn btn-secondary">
                             <span class="btn-icon">🧮</span>
@@ -194,6 +234,7 @@
                 </div>
             </section>
 
+            <!-- SECCIÓN ADMIN -->
             <section id="admin" class="section">
                 <div class="section-header">
                     <h2 class="section-title">Panel de Admin</h2>
@@ -225,11 +266,12 @@
                                     <option value="RPG">RPG</option>
                                     <option value="Estrategia">Estrategia</option>
                                     <option value="Carreras">Carreras</option>
+                                    <option value="MOBA">MOBA</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="nuevo-imagen">Link de imagen (opcional)</label>
-                                <input type="url" id="nuevo-imagen" class="input-text" placeholder="https://...">
+                                <label for="nuevo-imagen">Emoji del juego (opcional)</label>
+                                <input type="text" id="nuevo-imagen" class="input-text" placeholder="Ej: 🎮">
                             </div>
                         </div>
                         <button type="submit" class="btn btn-primary">
@@ -245,7 +287,7 @@
                     <div class="admin-actions">
                         <button id="btn-reset-juegos" class="btn btn-secondary">
                             <span class="btn-icon">🔄</span>
-                            Volver a los juegos de antes
+                            Restaurar catálogo original
                         </button>
                         <button id="btn-limpiar-reservas" class="btn btn-warning">
                             <span class="btn-icon">📋</span>
@@ -268,11 +310,14 @@
 
     <footer class="footer">
         <p>Hecho por <strong>Carmelo Gambale</strong> | CoderHouse 2025 - JavaScript</p>
-        <p class="footer-small">Entregable 2 - Simulador con DOM, Eventos y localStorage</p>
+        <p class="footer-small">Proyecto Final - Simulador con DOM, Eventos, localStorage, JSON y SweetAlert2</p>
     </footer>
 
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Script principal -->
     <script src="js/script.js"></script>
 </body>
 </html>

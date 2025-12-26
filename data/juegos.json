@@ -1,0 +1,150 @@
+{
+    "juegos": [
+        { 
+            "id": 1, 
+            "titulo": "Call of Duty: Modern Warfare II", 
+            "desarrollador": "Infinity Ward", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🎯" 
+        },
+        { 
+            "id": 2, 
+            "titulo": "Counter-Strike 2", 
+            "desarrollador": "Valve", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "💥" 
+        },
+        { 
+            "id": 3, 
+            "titulo": "The Last of Us Part II", 
+            "desarrollador": "Naughty Dog", 
+            "genero": "Aventura", 
+            "disponible": true, 
+            "imagen": "🧟" 
+        },
+        { 
+            "id": 4, 
+            "titulo": "Grand Theft Auto V", 
+            "desarrollador": "Rockstar Games", 
+            "genero": "Acción", 
+            "disponible": true, 
+            "imagen": "🚗" 
+        },
+        { 
+            "id": 5, 
+            "titulo": "EA FC 25", 
+            "desarrollador": "EA Sports", 
+            "genero": "Futbol", 
+            "disponible": true, 
+            "imagen": "⚽" 
+        },
+        { 
+            "id": 6, 
+            "titulo": "Red Dead Redemption 2", 
+            "desarrollador": "Rockstar Games", 
+            "genero": "Aventura", 
+            "disponible": true, 
+            "imagen": "🤠" 
+        },
+        { 
+            "id": 7, 
+            "titulo": "Fortnite", 
+            "desarrollador": "Epic Games", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🏝️" 
+        },
+        { 
+            "id": 8, 
+            "titulo": "Elden Ring", 
+            "desarrollador": "FromSoftware", 
+            "genero": "RPG", 
+            "disponible": true, 
+            "imagen": "⚔️" 
+        },
+        { 
+            "id": 9, 
+            "titulo": "God of War", 
+            "desarrollador": "Santa Monica Studio", 
+            "genero": "Acción", 
+            "disponible": true, 
+            "imagen": "👑" 
+        },
+        { 
+            "id": 10, 
+            "titulo": "The Witcher 3: Wild Hunt", 
+            "desarrollador": "CD Projekt Red", 
+            "genero": "RPG", 
+            "disponible": true, 
+            "imagen": "🧙‍♂️" 
+        },
+        { 
+            "id": 11, 
+            "titulo": "League of Legends", 
+            "desarrollador": "Riot Games", 
+            "genero": "MOBA", 
+            "disponible": true, 
+            "imagen": "🏆" 
+        },
+        { 
+            "id": 12, 
+            "titulo": "Minecraft", 
+            "desarrollador": "Mojang Studios", 
+            "genero": "Aventura", 
+            "disponible": true, 
+            "imagen": "🎮" 
+        },
+        { 
+            "id": 13, 
+            "titulo": "Overwatch 2", 
+            "desarrollador": "Blizzard Entertainment", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🎯" 
+        },
+        { 
+            "id": 14, 
+            "titulo": "Valorant", 
+            "desarrollador": "Riot Games", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🎯" 
+        },
+        { 
+            "id": 15, 
+            "titulo": "Apex Legends", 
+            "desarrollador": "Respawn Entertainment", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🎯" 
+        },
+        { 
+            "id": 16, 
+            "titulo": "Rainbow Six Siege", 
+            "desarrollador": "Ubisoft Montreal", 
+            "genero": "Shooter", 
+            "disponible": true, 
+            "imagen": "🎯" 
+        },
+        { 
+            "id": 17, 
+            "titulo": "The Legend of Zelda: Breath of the Wild", 
+            "desarrollador": "Nintendo", 
+            "genero": "Aventura", 
+            "disponible": true, 
+            "imagen": "👑" 
+        }, 
+        { 
+            "id": 18, 
+            "titulo": "The Legend of Zelda: Tears of the Kingdom", 
+            "desarrollador": "Nintendo", 
+            "genero": "RPG", 
+            "disponible": true, 
+            "imagen": "🧙‍♂️" 
+        }
+    ],
+    "version": "1.0",
+    "ultimaActualizacion": "2025-01-01"
+}

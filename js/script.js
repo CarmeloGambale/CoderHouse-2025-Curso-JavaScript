@@ -1,59 +1,66 @@
+
+
+// === CONSTANTES ===
 const CARGO_POR_DIA = 250;
+const URL_JUEGOS = "data/juegos.json";
 
-const JUEGOS_INICIALES = [
-    { id: 1, titulo: "Call of Duty: Modern Warfare II", desarrollador: "Infinity Ward", genero: "Shooter", disponible: true, imagen: "🎯" },
-    { id: 2, titulo: "Counter-Strike 2", desarrollador: "Valve", genero: "Shooter", disponible: true, imagen: "💥" },
-    { id: 3, titulo: "The Last of Us Part II", desarrollador: "Naughty Dog", genero: "Aventura", disponible: true, imagen: "🧟" },
-    { id: 4, titulo: "Grand Theft Auto V", desarrollador: "Rockstar Games", genero: "Acción", disponible: true, imagen: "🚗" },
-    { id: 5, titulo: "EA FC 25", desarrollador: "EA Sports", genero: "Futbol", disponible: true, imagen: "⚽" },
-    { id: 6, titulo: "Red Dead Redemption 2", desarrollador: "Rockstar Games", genero: "Aventura", disponible: true, imagen: "🤠" },
-    { id: 7, titulo: "Fortnite", desarrollador: "Epic Games", genero: "Shooter", disponible: true, imagen: "🏝️" },
-    { id: 8, titulo: "Elden Ring", desarrollador: "FromSoftware", genero: "RPG", disponible: true, imagen: "⚔️" },
-    { id: 9, titulo: "God of War", desarrollador: "Santa Monica Studio", genero: "Acción", disponible: true, imagen: "👑" },
-    { id: 10, titulo: "The Witcher 3: Wild Hunt", desarrollador: "CD Projekt Red", genero: "RPG", disponible: true, imagen: "🧙‍♂️" },
-    { id: 11, titulo: "League of Legends", desarrollador: "Riot Games", genero: "MOBA", disponible: true, imagen: "🏆" },
-    { id: 12, titulo: "Minecraft", desarrollador: "Mojang Studios", genero: "Aventura", disponible: true, imagen: "🎮" },
-    { id: 13, titulo: "Overwatch 2", desarrollador: "Blizzard Entertainment", genero: "Shooter", disponible: true, imagen: "🎯" },
-    { id: 14, titulo: "Valorant", desarrollador: "Riot Games", genero: "Shooter", disponible: true, imagen: "🎯" },
-    { id: 15, titulo: "Apex Legends", desarrollador: "Respawn Entertainment", genero: "Shooter", disponible: true, imagen: "🎯" },
-    { id: 16, titulo: "Rainbow Six Siege", desarrollador: "Ubisoft Montreal", genero: "Shooter", disponible: true, imagen: "🎯" },
-];
-
+// === VARIABLES GLOBALES ===
 let juegos = [];
 let jugadores = [];
 let reservas = [];
 let historialMultas = [];
+let juegosOriginales = []; 
 
-
+// === FUNCIONES DE STORAGE ===
 function guardarEnStorage(clave, datos) {
     localStorage.setItem(clave, JSON.stringify(datos));
 }
 
 function obtenerDeStorage(clave) {
-    let datos = localStorage.getItem(clave);
-    if (datos) {
-        return JSON.parse(datos);
-    }
-    return null;
+    const datos = localStorage.getItem(clave);
+    return datos ? JSON.parse(datos) : null;
 }
 
-function cargarDatos() {
-    let juegosGuardados = obtenerDeStorage("biblioteca_juegos");
-    if (juegosGuardados) {
+// === CARGA DE DATOS DESDE JSON (ASYNC/AWAIT) ===
+async function cargarJuegosDesdeJSON() {
+    try {
+        const response = await fetch(URL_JUEGOS);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        juegosOriginales = data.juegos.map(juego => ({ ...juego })); // Copia profunda
+        return data.juegos;
+        
+    } catch (error) {
+        console.error("Error cargando juegos desde JSON:", error);
+        mostrarToast("Error al cargar el catálogo. Usando datos locales.", "error");
+        return null;
+    }
+}
+
+async function cargarDatos() {
+    const juegosGuardados = obtenerDeStorage("biblioteca_juegos");
+    
+    if (juegosGuardados && juegosGuardados.length > 0) {
         juegos = juegosGuardados;
+        await cargarJuegosDesdeJSON();
     } else {
-        juegos = JUEGOS_INICIALES.slice();
-        guardarEnStorage("biblioteca_juegos", juegos);
+        const juegosJSON = await cargarJuegosDesdeJSON();
+        if (juegosJSON) {
+            juegos = juegosJSON.map(juego => ({ ...juego }));
+            guardarEnStorage("biblioteca_juegos", juegos);
+        } else {
+            juegos = [];
+        }
     }
     
-    let jugadoresGuardados = obtenerDeStorage("biblioteca_jugadores");
-    jugadores = jugadoresGuardados || [];
-    
-    let reservasGuardadas = obtenerDeStorage("biblioteca_reservas");
-    reservas = reservasGuardadas || [];
-    
-    let historialGuardado = obtenerDeStorage("biblioteca_historial_multas");
-    historialMultas = historialGuardado || [];
+    // Cargar otros datos del localStorage
+    jugadores = obtenerDeStorage("biblioteca_jugadores") || [];
+    reservas = obtenerDeStorage("biblioteca_reservas") || [];
+    historialMultas = obtenerDeStorage("biblioteca_historial_multas") || [];
 }
 
 function guardarTodo() {
@@ -63,49 +70,42 @@ function guardarTodo() {
     guardarEnStorage("biblioteca_historial_multas", historialMultas);
 }
 
-
+// === FUNCIONES UTILITARIAS ===
 function generarId(lista) {
-    if (lista.length === 0) {
-        return 1;
-    }
-    let ids = lista.map(function(item) {
-        return item.id;
-    });
-    let maxId = Math.max.apply(null, ids);
-    return maxId + 1;
+    if (lista.length === 0) return 1;
+    const ids = lista.map(item => item.id);
+    return Math.max(...ids) + 1;
 }
 
 function formatearFecha(fechaISO) {
-    let fecha = new Date(fechaISO);
+    const fecha = new Date(fechaISO);
     return fecha.toLocaleDateString("es-AR");
 }
 
 function calcularMultaPorRetraso(dias) {
-    if (dias <= 0) {
-        return 0;
-    }
-    return dias * CARGO_POR_DIA;
+    return dias <= 0 ? 0 : dias * CARGO_POR_DIA;
 }
 
+// === FACTORY FUNCTIONS ===
 function crearJugador(id, nombre, apellido, correo, usuario) {
     return {
-        id: id,
-        nombre: nombre,
-        apellido: apellido,
-        correo: correo,
-        usuario: usuario || "gamer_" + id,
+        id,
+        nombre,
+        apellido,
+        correo,
+        usuario: usuario || `gamer_${id}`,
         fechaRegistro: new Date().toISOString()
     };
 }
 
 function crearReserva(id, jugadorId, juegoId, dias) {
-    let fechaDevolucion = new Date();
+    const fechaDevolucion = new Date();
     fechaDevolucion.setDate(fechaDevolucion.getDate() + dias);
     
     return {
-        id: id,
-        jugadorId: jugadorId,
-        juegoId: juegoId,
+        id,
+        jugadorId,
+        juegoId,
         diasPrestamo: dias,
         fechaReserva: new Date().toISOString(),
         fechaDevolucion: fechaDevolucion.toISOString(),
@@ -113,142 +113,179 @@ function crearReserva(id, jugadorId, juegoId, dias) {
     };
 }
 
-
+// === SISTEMA DE NOTIFICACIONES ===
 function mostrarToast(mensaje, tipo) {
-    let container = document.getElementById("toast-container");
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.className = `toast ${tipo}`;
     
-    let toast = document.createElement("div");
-    toast.className = "toast " + tipo;
+    const iconos = {
+        success: "✅",
+        error: "❌",
+        warning: "⚠️",
+        info: "ℹ️"
+    };
     
-    let icono = "ℹ️";
-    if (tipo === "success") icono = "✅";
-    if (tipo === "error") icono = "❌";
-    if (tipo === "warning") icono = "⚠️";
-    
-    toast.innerHTML = "<span>" + icono + "</span> " + mensaje;
+    toast.innerHTML = `<span>${iconos[tipo] || "ℹ️"}</span> ${mensaje}`;
     container.appendChild(toast);
     
-    setTimeout(function() {
-        toast.remove();
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 function mostrarFeedback(elementoId, mensaje, tipo) {
-    let elemento = document.getElementById(elementoId);
+    const elemento = document.getElementById(elementoId);
     if (elemento) {
         elemento.textContent = mensaje;
-        elemento.className = "feedback-message " + tipo;
-        
-        setTimeout(function() {
-            elemento.className = "feedback-message";
-        }, 5000);
+        elemento.className = `feedback-message ${tipo}`;
+        setTimeout(() => elemento.className = "feedback-message", 5000);
     }
 }
 
+// === SWEETALERT2 - ALERTAS MEJORADAS ===
+function mostrarAlertaExito(titulo, texto) {
+    return Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: "success",
+        confirmButtonText: "¡Dale!",
+        confirmButtonColor: "#00ffc6",
+        background: "#131f3d",
+        color: "#f1f5ff",
+        iconColor: "#00ffc6"
+    });
+}
 
+function mostrarAlertaError(titulo, texto) {
+    return Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#ef4444",
+        background: "#131f3d",
+        color: "#f1f5ff"
+    });
+}
+
+function mostrarAlertaInfo(titulo, texto) {
+    return Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: "info",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#7df9ff",
+        background: "#131f3d",
+        color: "#f1f5ff",
+        iconColor: "#7df9ff"
+    });
+}
+
+async function confirmarAccion(titulo, texto, textoConfirmar = "Sí, dale") {
+    const resultado = await Swal.fire({
+        title: titulo,
+        text: texto,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#00ffc6",
+        cancelButtonColor: "#ef4444",
+        confirmButtonText: textoConfirmar,
+        cancelButtonText: "No, mejor no",
+        background: "#131f3d",
+        color: "#f1f5ff",
+        iconColor: "#fbbf24"
+    });
+    
+    return resultado.isConfirmed;
+}
+
+// === NAVEGACIÓN ===
 function cambiarSeccion(seccionId) {
-    let secciones = document.querySelectorAll(".section");
-    for (let i = 0; i < secciones.length; i++) {
-        secciones[i].classList.remove("active");
-    }
+    document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+    document.getElementById(seccionId)?.classList.add("active");
     
-    let seccionActiva = document.getElementById(seccionId);
-    if (seccionActiva) {
-        seccionActiva.classList.add("active");
-    }
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.section === seccionId);
+    });
     
-    let botones = document.querySelectorAll(".nav-btn");
-    for (let i = 0; i < botones.length; i++) {
-        botones[i].classList.remove("active");
-        if (botones[i].dataset.section === seccionId) {
-            botones[i].classList.add("active");
-        }
-    }
+    // Actualizar contenido según la sección
+    const acciones = {
+        catalogo: mostrarJuegos,
+        reservar: () => {
+            cargarSelectJugadores();
+            cargarSelectJuegos();
+            mostrarReservas();
+        },
+        registrar: mostrarJugadores,
+        multas: mostrarHistorialMultas,
+        admin: mostrarEstadisticas
+    };
     
-    if (seccionId === "catalogo") {
-        mostrarJuegos();
-    } else if (seccionId === "reservar") {
-        cargarSelectJugadores();
-        cargarSelectJuegos();
-        mostrarReservas();
-    } else if (seccionId === "registrar") {
-        mostrarJugadores();
-    } else if (seccionId === "multas") {
-        mostrarHistorialMultas();
-    } else if (seccionId === "admin") {
-        mostrarEstadisticas();
-    }
+    if (acciones[seccionId]) acciones[seccionId]();
 }
 
-
+// === CATÁLOGO DE JUEGOS ===
 function mostrarJuegos(listaFiltrada) {
-    let grid = document.getElementById("juegos-grid");
+    const grid = document.getElementById("juegos-grid");
     if (!grid) return;
     
-    let juegosParaMostrar = listaFiltrada || juegos;
+    const juegosParaMostrar = listaFiltrada || juegos;
     
     if (juegosParaMostrar.length === 0) {
         grid.innerHTML = '<div class="lista-vacia"><p>No hay juegos con esos filtros, bro 😅</p></div>';
         return;
     }
     
-    let html = "";
-    for (let i = 0; i < juegosParaMostrar.length; i++) {
-        let juego = juegosParaMostrar[i];
-        let claseDisponible = juego.disponible ? "" : "no-disponible";
-        let estadoTexto = juego.disponible ? "Libre" : "Lo tiene alguien";
-        let claseDot = juego.disponible ? "" : "reservado";
+    grid.innerHTML = juegosParaMostrar.map((juego, index) => {
+        const claseDisponible = juego.disponible ? "" : "no-disponible";
+        const estadoTexto = juego.disponible ? "Libre" : "Lo tiene alguien";
+        const claseDot = juego.disponible ? "" : "reservado";
         
-        html += '<article class="juego-card ' + claseDisponible + '" data-id="' + juego.id + '">';
-        html += '  <div class="juego-imagen">' + (juego.imagen || "🎮") + '</div>';
-        html += '  <div class="juego-info">';
-        html += '    <h3 class="juego-titulo">' + juego.titulo + '</h3>';
-        html += '    <p class="juego-desarrollador">' + juego.desarrollador + '</p>';
-        html += '    <span class="juego-genero">' + juego.genero + '</span>';
-        html += '    <div class="juego-estado">';
-        html += '      <span class="estado-dot ' + claseDot + '"></span>';
-        html += '      <span>' + estadoTexto + '</span>';
-        html += '    </div>';
-        html += '  </div>';
-        html += '</article>';
-    }
-    
-    grid.innerHTML = html;
+        return `
+            <article class="juego-card ${claseDisponible}" data-id="${juego.id}" style="animation-delay: ${index * 0.05}s">
+                <div class="juego-imagen">${juego.imagen || "🎮"}</div>
+                <div class="juego-info">
+                    <h3 class="juego-titulo">${juego.titulo}</h3>
+                    <p class="juego-desarrollador">${juego.desarrollador}</p>
+                    <span class="juego-genero">${juego.genero}</span>
+                    <div class="juego-estado">
+                        <span class="estado-dot ${claseDot}"></span>
+                        <span>${estadoTexto}</span>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join("");
 }
 
 function filtrarJuegos() {
-    let genero = document.getElementById("filtro-genero").value;
-    let disponible = document.getElementById("filtro-disponible").value;
-    let busqueda = document.getElementById("buscar-juego").value.toLowerCase().trim();
+    const genero = document.getElementById("filtro-genero").value;
+    const disponible = document.getElementById("filtro-disponible").value;
+    const busqueda = document.getElementById("buscar-juego").value.toLowerCase().trim();
     
-    let juegosFiltrados = juegos.slice();
+    let juegosFiltrados = [...juegos];
     
-    if (genero !== "") {
-        juegosFiltrados = juegosFiltrados.filter(function(j) {
-            return j.genero === genero;
-        });
+    if (genero) {
+        juegosFiltrados = juegosFiltrados.filter(j => j.genero === genero);
     }
     
-    if (disponible !== "") {
-        let disponibleBool = (disponible === "true");
-        juegosFiltrados = juegosFiltrados.filter(function(j) {
-            return j.disponible === disponibleBool;
-        });
+    if (disponible) {
+        const disponibleBool = disponible === "true";
+        juegosFiltrados = juegosFiltrados.filter(j => j.disponible === disponibleBool);
     }
     
-    if (busqueda !== "") {
-        juegosFiltrados = juegosFiltrados.filter(function(j) {
-            return j.titulo.toLowerCase().includes(busqueda) || 
-                   j.desarrollador.toLowerCase().includes(busqueda);
-        });
+    if (busqueda) {
+        juegosFiltrados = juegosFiltrados.filter(j => 
+            j.titulo.toLowerCase().includes(busqueda) || 
+            j.desarrollador.toLowerCase().includes(busqueda)
+        );
     }
     
     mostrarJuegos(juegosFiltrados);
 }
 
-
+// === GESTIÓN DE JUGADORES ===
 function mostrarJugadores() {
-    let lista = document.getElementById("jugadores-lista");
+    const lista = document.getElementById("jugadores-lista");
     if (!lista) return;
     
     if (jugadores.length === 0) {
@@ -256,197 +293,150 @@ function mostrarJugadores() {
         return;
     }
     
-    let html = "";
-    for (let i = 0; i < jugadores.length; i++) {
-        let jugador = jugadores[i];
-        html += '<div class="lista-item" data-id="' + jugador.id + '">';
-        html += '  <div class="lista-item-info">';
-        html += '    <span class="lista-item-titulo">' + jugador.nombre + ' ' + jugador.apellido + '</span>';
-        html += '    <span class="lista-item-subtitulo">@' + jugador.usuario + ' · ' + jugador.correo + '</span>';
-        html += '    <span class="lista-item-fecha">Se anotó el: ' + formatearFecha(jugador.fechaRegistro) + '</span>';
-        html += '  </div>';
-        html += '</div>';
-    }
-    
-    lista.innerHTML = html;
+    lista.innerHTML = jugadores.map(jugador => `
+        <div class="lista-item" data-id="${jugador.id}">
+            <div class="lista-item-info">
+                <span class="lista-item-titulo">${jugador.nombre} ${jugador.apellido}</span>
+                <span class="lista-item-subtitulo">@${jugador.usuario} · ${jugador.correo}</span>
+                <span class="lista-item-fecha">Se anotó el: ${formatearFecha(jugador.fechaRegistro)}</span>
+            </div>
+        </div>
+    `).join("");
 }
 
-function registrarJugador(evento) {
+async function registrarJugador(evento) {
     evento.preventDefault();
     
-    let nombre = document.getElementById("reg-nombre").value.trim();
-    let apellido = document.getElementById("reg-apellido").value.trim();
-    let correo = document.getElementById("reg-correo").value.trim();
-    let usuario = document.getElementById("reg-usuario").value.trim();
+    const nombre = document.getElementById("reg-nombre").value.trim();
+    const apellido = document.getElementById("reg-apellido").value.trim();
+    const correo = document.getElementById("reg-correo").value.trim();
+    const usuario = document.getElementById("reg-usuario").value.trim();
     
     if (!nombre || !apellido || !correo) {
-        mostrarFeedback("registro-feedback", "Che, completá todos los campos con * porfa", "error");
-        mostrarToast("Faltan datos, fijate", "error");
+        await mostrarAlertaError("¡Ey, faltan datos!", "Completá todos los campos con * para poder anotarte.");
         return;
     }
     
-    let yaExiste = false;
-    for (let i = 0; i < jugadores.length; i++) {
-        if (jugadores[i].correo.toLowerCase() === correo.toLowerCase()) {
-            yaExiste = true;
-            break;
-        }
-    }
+    const yaExiste = jugadores.some(j => j.correo.toLowerCase() === correo.toLowerCase());
     
     if (yaExiste) {
-        mostrarFeedback("registro-feedback", "Ese mail ya está registrado, probá con otro", "error");
-        mostrarToast("Mail repetido", "error");
+        await mostrarAlertaError("Mail repetido", "Ese mail ya está registrado, probá con otro.");
         return;
     }
     
-    let nuevoId = generarId(jugadores);
-    let nuevoJugador = crearJugador(nuevoId, nombre, apellido, correo, usuario);
-    
+    const nuevoJugador = crearJugador(generarId(jugadores), nombre, apellido, correo, usuario);
     jugadores.push(nuevoJugador);
     guardarEnStorage("biblioteca_jugadores", jugadores);
     
-    mostrarFeedback("registro-feedback", "¡Genial " + nombre + "! Ya estás adentro 🎮", "success");
-    mostrarToast(nombre + " se sumó a la banda", "success");
+    await mostrarAlertaExito(`¡Bienvenido ${nombre}!`, "Ya estás adentro de la banda gamer. Ahora podés pedir juegos prestados.");
     
     evento.target.reset();
     mostrarJugadores();
 }
 
-
+// === GESTIÓN DE RESERVAS ===
 function cargarSelectJugadores() {
-    let select = document.getElementById("reserva-jugador");
+    const select = document.getElementById("reserva-jugador");
     if (!select) return;
     
     select.innerHTML = '<option value="">-- ¿Quién sos? --</option>';
-    
-    for (let i = 0; i < jugadores.length; i++) {
-        let jugador = jugadores[i];
-        let option = document.createElement("option");
+    jugadores.forEach(jugador => {
+        const option = document.createElement("option");
         option.value = jugador.id;
-        option.textContent = jugador.nombre + " " + jugador.apellido + " (@" + jugador.usuario + ")";
+        option.textContent = `${jugador.nombre} ${jugador.apellido} (@${jugador.usuario})`;
         select.appendChild(option);
-    }
+    });
 }
 
 function cargarSelectJuegos() {
-    let select = document.getElementById("reserva-juego");
+    const select = document.getElementById("reserva-juego");
     if (!select) return;
     
     select.innerHTML = '<option value="">-- ¿Qué querés llevarte? --</option>';
-    
-    for (let i = 0; i < juegos.length; i++) {
-        let juego = juegos[i];
-        if (juego.disponible) {
-            let option = document.createElement("option");
-            option.value = juego.id;
-            option.textContent = juego.titulo + " (" + juego.genero + ")";
-            select.appendChild(option);
-        }
-    }
+    juegos.filter(j => j.disponible).forEach(juego => {
+        const option = document.createElement("option");
+        option.value = juego.id;
+        option.textContent = `${juego.titulo} (${juego.genero})`;
+        select.appendChild(option);
+    });
 }
 
 function mostrarReservas() {
-    let lista = document.getElementById("reservas-lista");
+    const lista = document.getElementById("reservas-lista");
     if (!lista) return;
     
-    let reservasActivas = reservas.filter(function(r) {
-        return r.activa;
-    });
+    const reservasActivas = reservas.filter(r => r.activa);
     
     if (reservasActivas.length === 0) {
         lista.innerHTML = '<div class="lista-vacia"><p>No hay juegos prestados ahora mismo</p></div>';
         return;
     }
     
-    let html = "";
-    for (let i = 0; i < reservasActivas.length; i++) {
-        let reserva = reservasActivas[i];
+    lista.innerHTML = reservasActivas.map(reserva => {
+        const jugador = jugadores.find(j => j.id === reserva.jugadorId);
+        const juego = juegos.find(j => j.id === reserva.juegoId);
         
-        let jugador = null;
-        let juego = null;
+        const nombreJuego = juego?.titulo || "Juego borrado";
+        const nombreJugador = jugador ? `${jugador.nombre} ${jugador.apellido}` : "Usuario borrado";
         
-        for (let j = 0; j < jugadores.length; j++) {
-            if (jugadores[j].id === reserva.jugadorId) {
-                jugador = jugadores[j];
-                break;
-            }
-        }
-        
-        for (let j = 0; j < juegos.length; j++) {
-            if (juegos[j].id === reserva.juegoId) {
-                juego = juegos[j];
-                break;
-            }
-        }
-        
-        let nombreJuego = juego ? juego.titulo : "Juego borrado";
-        let nombreJugador = jugador ? (jugador.nombre + " " + jugador.apellido) : "Usuario borrado";
-        
-        html += '<div class="lista-item" data-id="' + reserva.id + '">';
-        html += '  <div class="lista-item-info">';
-        html += '    <span class="lista-item-titulo">' + nombreJuego + '</span>';
-        html += '    <span class="lista-item-subtitulo">Lo tiene: ' + nombreJugador + '</span>';
-        html += '    <span class="lista-item-fecha">Del ' + formatearFecha(reserva.fechaReserva) + ' al ' + formatearFecha(reserva.fechaDevolucion) + '</span>';
-        html += '  </div>';
-        html += '  <button class="btn-devolver" onclick="devolverJuego(' + reserva.id + ')">Devolver</button>';
-        html += '</div>';
-    }
-    
-    lista.innerHTML = html;
+        return `
+            <div class="lista-item" data-id="${reserva.id}">
+                <div class="lista-item-info">
+                    <span class="lista-item-titulo">${nombreJuego}</span>
+                    <span class="lista-item-subtitulo">Lo tiene: ${nombreJugador}</span>
+                    <span class="lista-item-fecha">Del ${formatearFecha(reserva.fechaReserva)} al ${formatearFecha(reserva.fechaDevolucion)}</span>
+                </div>
+                <button class="btn-devolver" onclick="devolverJuego(${reserva.id})">Devolver</button>
+            </div>
+        `;
+    }).join("");
 }
 
-function procesarReserva(evento) {
+async function procesarReserva(evento) {
     evento.preventDefault();
     
-    let jugadorId = parseInt(document.getElementById("reserva-jugador").value);
-    let juegoId = parseInt(document.getElementById("reserva-juego").value);
-    let dias = parseInt(document.getElementById("reserva-dias").value);
+    const jugadorId = parseInt(document.getElementById("reserva-jugador").value);
+    const juegoId = parseInt(document.getElementById("reserva-juego").value);
+    const dias = parseInt(document.getElementById("reserva-dias").value);
     
     if (!jugadorId || !juegoId) {
-        mostrarFeedback("reserva-feedback", "Elegí quién sos y qué juego querés", "error");
-        mostrarToast("Te falta elegir algo", "error");
+        await mostrarAlertaError("Faltan datos", "Elegí quién sos y qué juego querés llevarte.");
         return;
     }
     
     if (dias < 3 || dias > 14) {
-        mostrarFeedback("reserva-feedback", "Los días tienen que ser entre 3 y 14, dale", "error");
-        mostrarToast("Días mal puestos", "error");
+        await mostrarAlertaError("Días inválidos", "Los días tienen que ser entre 3 y 14.");
         return;
     }
     
-    let juego = null;
-    for (let i = 0; i < juegos.length; i++) {
-        if (juegos[i].id === juegoId) {
-            juego = juegos[i];
-            break;
-        }
-    }
+    const juego = juegos.find(j => j.id === juegoId);
     
     if (!juego || !juego.disponible) {
-        mostrarFeedback("reserva-feedback", "Uh, ese juego ya se lo llevó otro", "error");
-        mostrarToast("Juego no disponible", "error");
+        await mostrarAlertaError("No disponible", "Uh, ese juego ya se lo llevó otro.");
         cargarSelectJuegos();
         return;
     }
     
-    let nuevoId = generarId(reservas);
-    let nuevaReserva = crearReserva(nuevoId, jugadorId, juegoId, dias);
+    const jugador = jugadores.find(j => j.id === jugadorId);
     
+    // Confirmar la reserva
+    const confirmar = await confirmarAccion(
+        "¿Confirmás el préstamo?",
+        `${jugador.nombre}, vas a llevarte "${juego.titulo}" por ${dias} días.`,
+        "¡Sí, me lo llevo!"
+    );
+    
+    if (!confirmar) return;
+    
+    const nuevaReserva = crearReserva(generarId(reservas), jugadorId, juegoId, dias);
     juego.disponible = false;
-    
     reservas.push(nuevaReserva);
     guardarTodo();
     
-    let jugador = null;
-    for (let i = 0; i < jugadores.length; i++) {
-        if (jugadores[i].id === jugadorId) {
-            jugador = jugadores[i];
-            break;
-        }
-    }
-    
-    mostrarFeedback("reserva-feedback", "¡Listo! " + juego.titulo + " es tuyo por " + dias + " días. ¡A viciar!", "success");
-    mostrarToast(jugador.nombre + " se llevó " + juego.titulo, "success");
+    await mostrarAlertaExito(
+        "¡Listo, es tuyo!",
+        `${juego.titulo} es tuyo por ${dias} días. ¡A viciar! 🎮`
+    );
     
     evento.target.reset();
     document.getElementById("reserva-dias").value = 7;
@@ -454,80 +444,77 @@ function procesarReserva(evento) {
     mostrarReservas();
 }
 
-function devolverJuego(reservaId) {
-    let reserva = null;
-    for (let i = 0; i < reservas.length; i++) {
-        if (reservas[i].id === reservaId) {
-            reserva = reservas[i];
-            break;
-        }
-    }
-    
+async function devolverJuego(reservaId) {
+    const reserva = reservas.find(r => r.id === reservaId);
     if (!reserva) {
         mostrarToast("No encontré esa reserva", "error");
         return;
     }
     
+    const juego = juegos.find(j => j.id === reserva.juegoId);
+    const nombreJuego = juego?.titulo || "El juego";
+    
+    const confirmar = await confirmarAccion(
+        "¿Devolver juego?",
+        `¿Confirmás que querés devolver "${nombreJuego}"?`,
+        "Sí, lo devuelvo"
+    );
+    
+    if (!confirmar) return;
+    
     reserva.activa = false;
-    
-    let juego = null;
-    for (let i = 0; i < juegos.length; i++) {
-        if (juegos[i].id === reserva.juegoId) {
-            juego = juegos[i];
-            juego.disponible = true;
-            break;
-        }
-    }
-    
+    if (juego) juego.disponible = true;
     guardarTodo();
     
-    let nombreJuego = juego ? juego.titulo : "El juego";
-    mostrarToast(nombreJuego + " devuelto, ¡gracias!", "success");
+    mostrarToast(`${nombreJuego} devuelto, ¡gracias!`, "success");
     
     cargarSelectJuegos();
     mostrarReservas();
     mostrarJuegos();
 }
 
-
-function calcularMulta(evento) {
+// === CALCULADORA DE MULTAS ===
+async function calcularMulta(evento) {
     evento.preventDefault();
     
-    let dias = parseInt(document.getElementById("multa-dias").value) || 0;
-    let monto = calcularMultaPorRetraso(dias);
+    const dias = parseInt(document.getElementById("multa-dias").value) || 0;
+    const monto = calcularMultaPorRetraso(dias);
     
-    let resultadoDiv = document.getElementById("multa-resultado");
-    let valorSpan = resultadoDiv.querySelector(".resultado-valor");
+    const resultadoDiv = document.getElementById("multa-resultado");
+    const valorSpan = resultadoDiv.querySelector(".resultado-valor");
     
-    valorSpan.textContent = "$" + monto.toLocaleString("es-AR");
-    
-    if (monto > 0) {
-        valorSpan.className = "resultado-valor con-multa";
-    } else {
-        valorSpan.className = "resultado-valor";
-    }
+    valorSpan.textContent = `$${monto.toLocaleString("es-AR")}`;
+    valorSpan.className = monto > 0 ? "resultado-valor con-multa" : "resultado-valor";
     
     if (dias > 0) {
-        let registro = {
+        historialMultas.unshift({
             id: generarId(historialMultas),
             diasRetraso: dias,
-            monto: monto,
+            monto,
             fecha: new Date().toISOString()
-        };
-        historialMultas.unshift(registro);
+        });
         guardarEnStorage("biblioteca_historial_multas", historialMultas);
         mostrarHistorialMultas();
     }
     
     if (monto === 0) {
-        mostrarToast("¡De una! Devolviste a tiempo, no debés nada", "success");
+        await mostrarAlertaExito("¡Bien ahí!", "Devolviste a tiempo, no debés nada. 👏");
     } else {
-        mostrarToast("Uff, te salió $" + monto + " de multa", "warning");
+        await Swal.fire({
+            title: "💸 Tenés multa",
+            html: `<p style="font-size: 1.2rem">Por <strong>${dias} día(s)</strong> de atraso te sale:</p>
+                   <p style="font-size: 2.5rem; color: #ef4444; font-weight: bold; margin-top: 10px;">$${monto.toLocaleString("es-AR")}</p>`,
+            icon: "warning",
+            confirmButtonText: "Entendido",
+            confirmButtonColor: "#fbbf24",
+            background: "#131f3d",
+            color: "#f1f5ff"
+        });
     }
 }
 
 function mostrarHistorialMultas() {
-    let lista = document.getElementById("historial-multas");
+    const lista = document.getElementById("historial-multas");
     if (!lista) return;
     
     if (historialMultas.length === 0) {
@@ -535,74 +522,73 @@ function mostrarHistorialMultas() {
         return;
     }
     
-    let ultimas = historialMultas.slice(0, 10);
-    
-    let html = "";
-    for (let i = 0; i < ultimas.length; i++) {
-        let registro = ultimas[i];
-        html += '<div class="lista-item">';
-        html += '  <div class="lista-item-info">';
-        html += '    <span class="lista-item-titulo">$' + registro.monto.toLocaleString("es-AR") + '</span>';
-        html += '    <span class="lista-item-subtitulo">' + registro.diasRetraso + ' día(s) de atraso</span>';
-        html += '    <span class="lista-item-fecha">' + formatearFecha(registro.fecha) + '</span>';
-        html += '  </div>';
-        html += '</div>';
-    }
-    
-    lista.innerHTML = html;
+    lista.innerHTML = historialMultas.slice(0, 10).map(registro => `
+        <div class="lista-item">
+            <div class="lista-item-info">
+                <span class="lista-item-titulo">$${registro.monto.toLocaleString("es-AR")}</span>
+                <span class="lista-item-subtitulo">${registro.diasRetraso} día(s) de atraso</span>
+                <span class="lista-item-fecha">${formatearFecha(registro.fecha)}</span>
+            </div>
+        </div>
+    `).join("");
 }
 
-function limpiarHistorialMultas() {
+async function limpiarHistorialMultas() {
+    if (historialMultas.length === 0) {
+        mostrarToast("No hay historial para borrar", "info");
+        return;
+    }
+    
+    const confirmar = await confirmarAccion(
+        "¿Borrar historial?",
+        "Se van a eliminar todos los cálculos de multas.",
+        "Sí, borrar"
+    );
+    
+    if (!confirmar) return;
+    
     historialMultas = [];
     guardarEnStorage("biblioteca_historial_multas", historialMultas);
     mostrarHistorialMultas();
     mostrarToast("Historial limpiado", "info");
 }
 
-
-function agregarJuego(evento) {
+// === PANEL DE ADMINISTRACIÓN ===
+async function agregarJuego(evento) {
     evento.preventDefault();
     
-    let titulo = document.getElementById("nuevo-titulo").value.trim();
-    let desarrollador = document.getElementById("nuevo-desarrollador").value.trim();
-    let genero = document.getElementById("nuevo-genero").value;
-    let imagen = document.getElementById("nuevo-imagen").value.trim();
+    const titulo = document.getElementById("nuevo-titulo").value.trim();
+    const desarrollador = document.getElementById("nuevo-desarrollador").value.trim();
+    const genero = document.getElementById("nuevo-genero").value;
+    const imagen = document.getElementById("nuevo-imagen").value.trim();
     
     if (!titulo || !desarrollador || !genero) {
-        mostrarFeedback("admin-feedback", "Completá los campos obligatorios", "error");
-        mostrarToast("Faltan datos", "error");
+        await mostrarAlertaError("Faltan datos", "Completá los campos obligatorios para agregar el juego.");
         return;
     }
     
-    let existe = false;
-    for (let i = 0; i < juegos.length; i++) {
-        if (juegos[i].titulo.toLowerCase() === titulo.toLowerCase()) {
-            existe = true;
-            break;
-        }
-    }
+    const existe = juegos.some(j => j.titulo.toLowerCase() === titulo.toLowerCase());
     
     if (existe) {
-        mostrarFeedback("admin-feedback", "Ya tenemos ese juego, fijate", "error");
-        mostrarToast("Juego repetido", "error");
+        await mostrarAlertaError("Juego repetido", "Ya tenemos ese juego en el catálogo.");
         return;
     }
     
-    let emojisPorGenero = {
-        "Shooter": "🎯",
-        "Aventura": "🗺️",
-        "Acción": "💥",
-        "Futbol": "⚽",
-        "RPG": "⚔️",
-        "Estrategia": "♟️",
-        "Carreras": "🏎️"
+    const emojisPorGenero = {
+        Shooter: "🎯",
+        Aventura: "🗺️",
+        Acción: "💥",
+        Futbol: "⚽",
+        RPG: "⚔️",
+        Estrategia: "♟️",
+        Carreras: "🏎️"
     };
     
-    let nuevoJuego = {
+    const nuevoJuego = {
         id: generarId(juegos),
-        titulo: titulo,
-        desarrollador: desarrollador,
-        genero: genero,
+        titulo,
+        desarrollador,
+        genero,
         disponible: true,
         imagen: imagen || emojisPorGenero[genero] || "🎮"
     };
@@ -610,142 +596,238 @@ function agregarJuego(evento) {
     juegos.push(nuevoJuego);
     guardarEnStorage("biblioteca_juegos", juegos);
     
-    mostrarFeedback("admin-feedback", "¡" + titulo + " agregado al catálogo!", "success");
-    mostrarToast("Juego agregado de 10", "success");
+    await mostrarAlertaExito("¡Juego agregado!", `"${titulo}" ya está en el catálogo.`);
     
     evento.target.reset();
     mostrarEstadisticas();
 }
 
-function restaurarJuegosOriginales() {
-    juegos = JUEGOS_INICIALES.slice();
+async function restaurarJuegosOriginales() {
+    const confirmar = await confirmarAccion(
+        "¿Restaurar catálogo?",
+        "Esto va a volver a los juegos originales del JSON. Los juegos que agregaste se van a perder.",
+        "Sí, restaurar"
+    );
     
-    for (let i = 0; i < reservas.length; i++) {
-        reservas[i].activa = false;
+    if (!confirmar) return;
+    
+    if (juegosOriginales.length > 0) {
+        juegos = juegosOriginales.map(j => ({ ...j }));
+    } else {
+        // Si por alguna razón no tenemos los originales, recargamos del JSON
+        const juegosJSON = await cargarJuegosDesdeJSON();
+        if (juegosJSON) {
+            juegos = juegosJSON.map(j => ({ ...j }));
+        }
     }
     
+    reservas.forEach(r => r.activa = false);
     guardarTodo();
-    mostrarToast("Juegos restaurados a los originales", "info");
+    
+    mostrarToast("Catálogo restaurado a los originales", "info");
     mostrarEstadisticas();
     
-    let catalogo = document.getElementById("catalogo");
-    if (catalogo && catalogo.classList.contains("active")) {
+    if (document.getElementById("catalogo")?.classList.contains("active")) {
         mostrarJuegos();
     }
 }
 
-function limpiarReservas() {
-    for (let i = 0; i < juegos.length; i++) {
-        juegos[i].disponible = true;
+async function limpiarReservas() {
+    const reservasActivas = reservas.filter(r => r.activa);
+    
+    if (reservasActivas.length === 0) {
+        mostrarToast("No hay préstamos activos", "info");
+        return;
     }
     
-    for (let i = 0; i < reservas.length; i++) {
-        reservas[i].activa = false;
-    }
+    const confirmar = await confirmarAccion(
+        "¿Cancelar todos los préstamos?",
+        `Hay ${reservasActivas.length} préstamo(s) activo(s). Todos los juegos van a quedar libres.`,
+        "Sí, cancelar todos"
+    );
     
+    if (!confirmar) return;
+    
+    juegos.forEach(j => j.disponible = true);
+    reservas.forEach(r => r.activa = false);
     guardarTodo();
-    mostrarToast("Todas las reservas limpiadas", "info");
+    
+    mostrarToast("Todas las reservas canceladas", "info");
     mostrarEstadisticas();
 }
 
-function limpiarTodo() {
+async function limpiarTodo() {
+    const confirmar = await Swal.fire({
+        title: "⚠️ ¡Atención!",
+        html: `<p>Esto va a <strong>BORRAR TODO</strong>:</p>
+               <ul style="text-align: left; margin-top: 10px;">
+                 <li>Todos los juegos</li>
+                 <li>Todos los jugadores registrados</li>
+                 <li>Todas las reservas</li>
+                 <li>Todo el historial de multas</li>
+               </ul>
+               <p style="margin-top: 10px; color: #ef4444;"><strong>Esta acción no se puede deshacer.</strong></p>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#64748b",
+        confirmButtonText: "Sí, borrar TODO",
+        cancelButtonText: "¡No, cancelar!",
+        background: "#131f3d",
+        color: "#f1f5ff"
+    });
+    
+    if (!confirmar.isConfirmed) return;
+    
+    // Doble confirmación por seguridad
+    const confirmarDoble = await Swal.fire({
+        title: "¿Estás 100% seguro?",
+        text: "Última oportunidad para arrepentirte...",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#00ffc6",
+        confirmButtonText: "Dale, borrá todo",
+        cancelButtonText: "No, mejor no",
+        background: "#131f3d",
+        color: "#f1f5ff"
+    });
+    
+    if (!confirmarDoble.isConfirmed) {
+        mostrarToast("Uff, zafaste 😅", "info");
+        return;
+    }
+    
     localStorage.removeItem("biblioteca_juegos");
     localStorage.removeItem("biblioteca_jugadores");
     localStorage.removeItem("biblioteca_reservas");
     localStorage.removeItem("biblioteca_historial_multas");
     
-    cargarDatos();
+    await cargarDatos();
     
     mostrarToast("Todo borrado, empezamos de cero", "warning");
     mostrarEstadisticas();
 }
 
 function mostrarEstadisticas() {
-    let container = document.getElementById("estadisticas");
+    const container = document.getElementById("estadisticas");
     if (!container) return;
     
-    let disponibles = 0;
-    let reservados = 0;
-    for (let i = 0; i < juegos.length; i++) {
-        if (juegos[i].disponible) {
-            disponibles++;
-        } else {
-            reservados++;
-        }
-    }
+    const disponibles = juegos.filter(j => j.disponible).length;
+    const reservados = juegos.length - disponibles;
+    const reservasActivas = reservas.filter(r => r.activa).length;
     
-    let reservasActivas = 0;
-    for (let i = 0; i < reservas.length; i++) {
-        if (reservas[i].activa) {
-            reservasActivas++;
-        }
-    }
-    
-    let html = '';
-    html += '<div class="stat-card"><div class="stat-valor">' + juegos.length + '</div><div class="stat-label">Juegos Totales</div></div>';
-    html += '<div class="stat-card"><div class="stat-valor">' + disponibles + '</div><div class="stat-label">Libres</div></div>';
-    html += '<div class="stat-card"><div class="stat-valor">' + reservados + '</div><div class="stat-label">Prestados</div></div>';
-    html += '<div class="stat-card"><div class="stat-valor">' + jugadores.length + '</div><div class="stat-label">Gamers</div></div>';
-    html += '<div class="stat-card"><div class="stat-valor">' + reservasActivas + '</div><div class="stat-label">Préstamos Activos</div></div>';
-    html += '<div class="stat-card"><div class="stat-valor">' + historialMultas.length + '</div><div class="stat-label">Multas Calculadas</div></div>';
-    
-    container.innerHTML = html;
+    container.innerHTML = `
+        <div class="stat-card">
+            <div class="stat-valor">${juegos.length}</div>
+            <div class="stat-label">Juegos Totales</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-valor">${disponibles}</div>
+            <div class="stat-label">Libres</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-valor">${reservados}</div>
+            <div class="stat-label">Prestados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-valor">${jugadores.length}</div>
+            <div class="stat-label">Gamers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-valor">${reservasActivas}</div>
+            <div class="stat-label">Préstamos Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-valor">${historialMultas.length}</div>
+            <div class="stat-label">Multas Calculadas</div>
+        </div>
+    `;
 }
 
-
+// === CONFIGURACIÓN DE EVENTOS ===
 function configurarEventos() {
-    let botonesNav = document.querySelectorAll(".nav-btn");
-    for (let i = 0; i < botonesNav.length; i++) {
-        botonesNav[i].addEventListener("click", function() {
-            let seccion = this.dataset.section;
-            if (seccion) {
-                cambiarSeccion(seccion);
+    // === Sidebar móvil ===
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebar-overlay");
+    const hamburgerBtn = document.getElementById("hamburger-btn");
+    const sidebarClose = document.getElementById("sidebar-close");
+
+    function abrirSidebar() {
+        sidebar?.classList.add("open");
+        sidebarOverlay?.classList.add("active");
+        document.body.style.overflow = "hidden";
+    }
+
+    function cerrarSidebar() {
+        sidebar?.classList.remove("open");
+        sidebarOverlay?.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+
+    hamburgerBtn?.addEventListener("click", abrirSidebar);
+    sidebarClose?.addEventListener("click", cerrarSidebar);
+    sidebarOverlay?.addEventListener("click", cerrarSidebar);
+
+    // Navegación
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            if (this.dataset.section) {
+                cambiarSeccion(this.dataset.section);
+                // Cerrar sidebar en móvil al seleccionar
+                if (window.innerWidth <= 1024) {
+                    cerrarSidebar();
+                }
             }
         });
-    }
+    });
     
-    let filtroGenero = document.getElementById("filtro-genero");
-    let filtroDisponible = document.getElementById("filtro-disponible");
-    let buscarJuego = document.getElementById("buscar-juego");
+    // Filtros del catálogo
+    document.getElementById("filtro-genero")?.addEventListener("change", filtrarJuegos);
+    document.getElementById("filtro-disponible")?.addEventListener("change", filtrarJuegos);
+    document.getElementById("buscar-juego")?.addEventListener("input", filtrarJuegos);
     
-    if (filtroGenero) filtroGenero.addEventListener("change", filtrarJuegos);
-    if (filtroDisponible) filtroDisponible.addEventListener("change", filtrarJuegos);
-    if (buscarJuego) buscarJuego.addEventListener("input", filtrarJuegos);
+    // Formularios
+    document.getElementById("form-registro")?.addEventListener("submit", registrarJugador);
+    document.getElementById("form-reserva")?.addEventListener("submit", procesarReserva);
+    document.getElementById("form-multa")?.addEventListener("submit", calcularMulta);
+    document.getElementById("form-agregar-juego")?.addEventListener("submit", agregarJuego);
     
-    let formRegistro = document.getElementById("form-registro");
-    if (formRegistro) formRegistro.addEventListener("submit", registrarJugador);
-    
-    let formReserva = document.getElementById("form-reserva");
-    if (formReserva) formReserva.addEventListener("submit", procesarReserva);
-    
-    let formMulta = document.getElementById("form-multa");
-    if (formMulta) formMulta.addEventListener("submit", calcularMulta);
-    
-    let btnLimpiarHistorial = document.getElementById("limpiar-historial");
-    if (btnLimpiarHistorial) btnLimpiarHistorial.addEventListener("click", limpiarHistorialMultas);
-    
-    let formAgregarJuego = document.getElementById("form-agregar-juego");
-    if (formAgregarJuego) formAgregarJuego.addEventListener("submit", agregarJuego);
-    
-    let btnReset = document.getElementById("btn-reset-juegos");
-    if (btnReset) btnReset.addEventListener("click", restaurarJuegosOriginales);
-    
-    let btnLimpiarReservas = document.getElementById("btn-limpiar-reservas");
-    if (btnLimpiarReservas) btnLimpiarReservas.addEventListener("click", limpiarReservas);
-    
-    let btnLimpiarTodo = document.getElementById("btn-limpiar-todo");
-    if (btnLimpiarTodo) btnLimpiarTodo.addEventListener("click", limpiarTodo);
+    // Botones de admin
+    document.getElementById("limpiar-historial")?.addEventListener("click", limpiarHistorialMultas);
+    document.getElementById("btn-reset-juegos")?.addEventListener("click", restaurarJuegosOriginales);
+    document.getElementById("btn-limpiar-reservas")?.addEventListener("click", limpiarReservas);
+    document.getElementById("btn-limpiar-todo")?.addEventListener("click", limpiarTodo);
 }
 
-
-function iniciarApp() {
-    cargarDatos();
+// === INICIALIZACIÓN ===
+async function iniciarApp() {
+    // Mostrar loading mientras carga
+    const grid = document.getElementById("juegos-grid");
+    if (grid) {
+        grid.innerHTML = '<div class="lista-vacia"><p>⏳ Cargando catálogo...</p></div>';
+    }
+    
+    await cargarDatos();
     configurarEventos();
     mostrarJuegos();
     
-    setTimeout(function() {
-        mostrarToast("¡Buenasss! Bienvenido a la Biblioteca Gamer 🎮", "success");
+    // Mensaje de bienvenida con SweetAlert
+    setTimeout(() => {
+        Swal.fire({
+            title: "¡Buenasss! 🎮",
+            text: "Bienvenido a la Biblioteca Gamer. ¡Elegí un juego y a viciar!",
+            icon: "success",
+            confirmButtonText: "¡Vamos!",
+            confirmButtonColor: "#00ffc6",
+            background: "#131f3d",
+            color: "#f1f5ff",
+            iconColor: "#00ffc6",
+            timer: 4000,
+            timerProgressBar: true
+        });
     }, 500);
 }
 
+// Iniciar cuando el DOM esté listo
 document.addEventListener("DOMContentLoaded", iniciarApp);
